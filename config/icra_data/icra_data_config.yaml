@@ -1,8 +1,8 @@
 %YAML:1.0
 
 #common parameters
-imu_topic: "/imu/data_raw"
-image_topic: "/thermal/image_rotated"
+imu_topic: "/vn100/imu"
+image_topic: "/tau_nodelet/thermal_image"
 output_path: "/tmp/vins_output"
 
 #camera calibration 
@@ -11,15 +11,15 @@ camera_name: camera
 image_width: 640
 image_height: 512
 distortion_parameters:
-   k1: -0.38364548 
-   k2: 0.15481673
-   p1: 0.00027546
-   p2: -0.00112242
+   k1: -0.125172452973
+   k2: -0.0158508045529
+   p1: 0.00552041769855
+   p2: 0.00188160221577
 projection_parameters:
-   fx: 399.92125789 
-   fy: 400.84070739 
-   cx: 316.72137347 
-   cy: 260.57088606 
+   fx: 440.381678762
+   fy: 328.082910449
+   cx: 440.34105427
+   cy: 257.335140534
 
 # Extrinsic parameter between IMU and Camera.
 estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
@@ -31,15 +31,15 @@ extrinsicRotation: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [0.9996098, -0.00179101, -0.02787557,
-          -0.02790525, -0.01952003, -0.99941996, 
-          0.00124584, 0.99980786, -0.01956239]
+   data: [0.00368410603583, -0.31582399615, 0.948810640127,
+          -0.999990442119, -0.0033974103619, 0.00275195807899, 
+          0.00235436470251, -0.948811710014, -0.315833493961]
 #Translation from camera frame to imu frame, imu^T_cam
 extrinsicTranslation: !!opencv-matrix
    rows: 3
    cols: 1
    dt: d
-   data: [-0.00173672,-0.08101091,-0.0743279]
+   data: [0.132385017016,0.0231335126268,-0.0421824381085]
 
 #feature traker paprameters
 max_cnt: 150            # max feature number in feature tracking
