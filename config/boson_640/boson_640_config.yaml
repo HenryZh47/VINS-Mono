@@ -1,8 +1,8 @@
 %YAML:1.0
 
 #common parameters
-imu_topic: "/imu/data_raw"
-image_topic: "/thermal/image_rotated"
+imu_topic: "/imu/data"
+image_topic: "/thermal/image_eightbit"
 output_path: "/tmp/vins_output"
 
 #camera calibration 
@@ -11,39 +11,35 @@ camera_name: camera
 image_width: 640
 image_height: 512
 distortion_parameters:
-   k1: -0.38364548 
-   k2: 0.15481673
-   p1: 0.00027546
-   p2: -0.00112242
+  k1: -0.3570177436783058
+  k2: 0.12568663855520218
+  p1: 0.0035096744648418607
+  p2: 0.00059
 projection_parameters:
-   fx: 399.92125789 
-   fy: 400.84070739 
-   cx: 316.72137347 
-   cy: 260.57088606 
+  fx: 391.5162840730665
+  fy: 392.96131720987114
+  cx: 315.6618565999557
+  cy: 252.91158584290113
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
-                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
-                        # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.                        
-#If you choose 0 or 1, you should write down the following matrix.
-#Rotation from camera frame to imu frame, imu^R_cam
 extrinsicRotation: !!opencv-matrix
-   rows: 3
-   cols: 3
-   dt: d
-   data: [0.9996098, -0.00179101, -0.02787557,
-          -0.02790525, -0.01952003, -0.99941996, 
-          0.00124584, 0.99980786, -0.01956239]
+  rows: 3
+  cols: 3
+  dt: d
+  data: [ -0.02507139, -0.01750379, -0.99953241,
+           0.99925138, -0.02990725, -0.02454061,
+           -0.02946371, -0.99939941, 0.0182405]
+
 #Translation from camera frame to imu frame, imu^T_cam
 extrinsicTranslation: !!opencv-matrix
-   rows: 3
-   cols: 1
-   dt: d
-   data: [-0.00173672,-0.08101091,-0.0743279]
+  rows: 3
+  cols: 1
+  dt: d
+  data: [-0.08090063, 0.04558695,-0.00339141]
 
 #feature traker paprameters
 max_cnt: 150            # max feature number in feature tracking
-min_dist: 40            # min distance between two features 
+min_dist: 15            # min distance between two features 
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
@@ -70,11 +66,11 @@ pose_graph_save_path: "/tmp/vins_output/pose_graph/" # save and load path
 
 #unsynchronization parameters
 estimate_td: 1                      # online estimate time offset between camera and imu
-td: -0.029051585925                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+td: -0.001                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
 
 #rolling shutter parameters
-rolling_shutter: 0                  # 0: global shutter camera, 1: rolling shutter camera
-rolling_shutter_tr: 0               # unit: s. rolling shutter read out time per frame (from data sheet). 
+rolling_shutter: 1                  # 0: global shutter camera, 1: rolling shutter camera
+rolling_shutter_tr: 0.01               # unit: s. rolling shutter read out time per frame (from data sheet). 
 
 #visualization parameters
 save_image: 1                   # save image in pose graph for visualization prupose; you can close this function by setting 0 
