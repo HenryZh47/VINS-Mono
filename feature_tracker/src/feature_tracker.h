@@ -46,6 +46,8 @@ class FeatureTracker
 
     void undistortedPoints();
 
+    void checkTrackingDegenerate();
+
     cv::Mat mask;
     cv::Mat fisheye_mask;
     cv::Mat prev_img, cur_img, forw_img;
@@ -60,6 +62,9 @@ class FeatureTracker
     camodocal::CameraPtr m_camera;
     double cur_time;
     double prev_time;
+
+    // tracked features threshold for tracking degenerate detection
+    bool tracking_degenerated = false;
 
     static int n_id;
 };

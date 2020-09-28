@@ -127,6 +127,9 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
     for (auto &n : track_cnt)
         n++;
 
+    // check if tracking is ill-conditioned
+    checkTrackingDegenerate();
+
     if (PUB_THIS_FRAME)
     {
         rejectWithF();
@@ -303,4 +306,14 @@ void FeatureTracker::undistortedPoints()
         }
     }
     prev_un_pts_map = cur_un_pts_map;
+}
+
+void FeatureTracker::checkTrackingDegenerate()
+{
+    // for now just check the number of valid features after KLT
+    if (static_cast<int>(track_cnt.size()) < TRACKING_CNT_THRESH) {
+        tracking_degenerated = true;
+    } else {
+        tracking_degenerated = false;
+    }
 }

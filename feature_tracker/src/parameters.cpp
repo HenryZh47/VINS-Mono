@@ -18,6 +18,8 @@ int FOCAL_LENGTH;
 int FISHEYE;
 bool PUB_THIS_FRAME;
 
+int TRACKING_CNT_THRESH;
+
 template <typename T>
 T readParam(ros::NodeHandle &n, std::string name)
 {
@@ -59,6 +61,8 @@ void readParameters(ros::NodeHandle &n)
     if (FISHEYE == 1)
         FISHEYE_MASK = VINS_FOLDER_PATH + "config/fisheye_mask.jpg";
     CAM_NAMES.push_back(config_file);
+
+    TRACKING_CNT_THRESH = fsSettings["tracking_cnt_thresh"];
 
     WINDOW_SIZE = 20;
     STEREO_TRACK = false;

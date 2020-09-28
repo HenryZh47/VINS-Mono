@@ -23,4 +23,6 @@ extern int EQUALIZE;
 extern int FISHEYE;
 extern bool PUB_THIS_FRAME;
 
+extern int TRACKING_CNT_THRESH;
+
 void readParameters(ros::NodeHandle &n);
