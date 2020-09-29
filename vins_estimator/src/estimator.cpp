@@ -800,6 +800,11 @@ void Estimator::optimization()
 
     }
 
+    // detect degeneracy in optimization phase
+    if (optimizationDegeneracyDetection(problem)) {
+        printf("Detected degeneracy in optimization!");
+    }
+
     ceres::Solver::Options options;
 
     options.linear_solver_type = ceres::DENSE_SCHUR;
@@ -1145,3 +1150,30 @@ void Estimator::setReloFrame(double _frame_stamp, int _frame_index, vector<Vecto
     }
 }
 
+bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem) {
+    ceres::Covariance::Options cov_options;
+    cov_options.algorithm_type = ceres::DENSE_SVD;
+    cov_options.apply_loss_function = true;
+    cov_options.min_reciprocal_condition_number = 1.95146e-300; // for deficient Jacobian matrix
+    cov_options.null_space_rank = -1; // for deficient Jacobian matrix
+    ceres::Covariance covariance(cov_options);
+
+    // pushback cov on pose parameters of last frame
+    vector<pair<const double*, const double*> > cov_blocks;
+    double *last_pose_param = para_Pose[WINDOW_SIZE];
+    cov_blocks.push_back(std::make_pair(last_pose_param, last_pose_param));
+
+    // compute and get covariance
+    Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor> cov_pose = Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor>::Zero();
+    covariance.Compute(cov_blocks, &problem);
+    covariance.GetCovarianceBlockInTangentSpace(last_pose_param, last_pose_param, cov_pose.data());
+
+    // approximate information matrix with inverse of covariance
+    Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor> JtJ = cov_pose.inverse();
+    // Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor> MatX = Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor>::Ones();
+
+    std::cout << "cov_pose: " << cov_pose << std::endl;
+    std::cout << "JtJ: " << JtJ << std::endl;
+
+    return false;
+}

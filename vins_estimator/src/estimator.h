@@ -48,7 +48,7 @@ class Estimator
     void vector2double();
     void double2vector();
     bool failureDetection();
-
+    bool optimizationDegeneracyDetection(ceres::Problem &problem);
 
     enum SolverFlag
     {
