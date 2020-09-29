@@ -1169,7 +1169,9 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem) {
     covariance.GetCovarianceBlockInTangentSpace(last_pose_param, last_pose_param, cov_pose.data());
 
     // approximate information matrix with inverse of covariance
-    Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor> JtJ = cov_pose.inverse();
+    // take first three position dims
+    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> cov_position = cov_pose.block<3, 3>(0, 0);
+    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> JtJ = cov_position.inverse();
     // Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor> MatX = Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor>::Ones();
 
     std::cout << "cov_pose: " << cov_pose << std::endl;
