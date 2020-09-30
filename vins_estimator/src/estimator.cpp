@@ -800,11 +800,6 @@ void Estimator::optimization()
 
     }
 
-    // detect degeneracy in optimization phase
-    if (optimizationDegeneracyDetection(problem)) {
-        printf("Detected degeneracy in optimization!");
-    }
-
     ceres::Solver::Options options;
 
     options.linear_solver_type = ceres::DENSE_SCHUR;
@@ -824,6 +819,13 @@ void Estimator::optimization()
     //cout << summary.BriefReport() << endl;
     ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
     ROS_DEBUG("solver costs: %f", t_solver.toc());
+
+    // detect degeneracy in optimization phase
+    TicToc t_cov;
+    if (optimizationDegeneracyDetection(problem)) {
+        printf("Detected degeneracy in optimization!");
+    }
+    ROS_DEBUG("Optimization degeneracy costs: %f", t_cov.toc());
 
     double2vector();
 
@@ -1152,10 +1154,7 @@ void Estimator::setReloFrame(double _frame_stamp, int _frame_index, vector<Vecto
 
 bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem) {
     ceres::Covariance::Options cov_options;
-    cov_options.algorithm_type = ceres::DENSE_SVD;
-    cov_options.apply_loss_function = true;
-    cov_options.min_reciprocal_condition_number = 1.95146e-300; // for deficient Jacobian matrix
-    cov_options.null_space_rank = -1; // for deficient Jacobian matrix
+    cov_options.num_threads = 6;
     ceres::Covariance covariance(cov_options);
 
     // pushback cov on pose parameters of last frame
@@ -1165,17 +1164,20 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem) {
 
     // compute and get covariance
     Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor> cov_pose = Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor>::Zero();
-    covariance.Compute(cov_blocks, &problem);
-    covariance.GetCovarianceBlockInTangentSpace(last_pose_param, last_pose_param, cov_pose.data());
+    if (covariance.Compute(cov_blocks, &problem)) {
+        covariance.GetCovarianceBlockInTangentSpace(last_pose_param, last_pose_param, cov_pose.data());
 
-    // approximate information matrix with inverse of covariance
-    // take first three position dims
-    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> cov_position = cov_pose.block<3, 3>(0, 0);
-    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> JtJ = cov_position.inverse();
-    // Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor> MatX = Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor>::Ones();
+        // approximate information matrix with inverse of covariance
+        // take first three position dims
+        Eigen::Matrix<double, 3, 3, Eigen::RowMajor> cov_position = cov_pose.block<3, 3>(0, 0);
+        Eigen::Matrix<double, 3, 3, Eigen::RowMajor> JtJ = cov_position.inverse();
+        // Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor> MatX = Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor>::Ones();
 
-    std::cout << "cov_pose: " << cov_pose << std::endl;
-    std::cout << "JtJ: " << JtJ << std::endl;
+        std::cout << "cov_pose: " << cov_pose << std::endl;
+        std::cout << "JtJ: " << JtJ << std::endl;
+    } else {
+        ROS_WARN("Invalid Covariance!");
+    }
 
     return false;
 }
