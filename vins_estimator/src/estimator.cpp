@@ -821,8 +821,9 @@ void Estimator::optimization()
     ROS_DEBUG("solver costs: %f", t_solver.toc());
 
     // detect degeneracy in optimization phase
+    // TODO (henryzh47): put eigen value threshold to configuration file
     TicToc t_cov;
-    if (optimizationDegeneracyDetection(problem)) {
+    if (optimizationDegeneracyDetection(problem, 50.0)) {
         printf("Detected degeneracy in optimization!");
     }
     ROS_DEBUG("Optimization degeneracy costs: %f", t_cov.toc());
@@ -1152,7 +1153,9 @@ void Estimator::setReloFrame(double _frame_stamp, int _frame_index, vector<Vecto
     }
 }
 
-bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem) {
+bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const double eigen_thresh) {        
+    const int POSE_DIM = 6;
+
     ceres::Covariance::Options cov_options;
     cov_options.num_threads = 6;
     ceres::Covariance covariance(cov_options);
@@ -1168,13 +1171,18 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem) {
         covariance.GetCovarianceBlockInTangentSpace(last_pose_param, last_pose_param, cov_pose.data());
 
         // approximate information matrix with inverse of covariance
-        // take first three position dims
-        Eigen::Matrix<double, 6, 6, Eigen::RowMajor> cov_position = cov_pose.block<6, 6>(0, 0);
-        Eigen::Matrix<double, 6, 6, Eigen::RowMajor> JtJ = cov_position.inverse();
-        // Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor> MatX = Eigen::Matrix<double, SIZE_POSE, 1, Eigen::RowMajor>::Ones();
+        // take first six position dims (unit quaternion will lead to zero cov entries in last row)
+        Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> cov_position = cov_pose.block<POSE_DIM, POSE_DIM>(0, 0);
+        Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> JtJ = cov_position.inverse();
 
-        std::cout << "cov_pose: " << cov_pose << std::endl;
-        std::cout << "JtJ: " << JtJ << std::endl;
+        // find the eigenvalues of JtJ that smaller than a threshold
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
+        const auto eigen_values = eigen_result.eigenvalues();
+        for (int i = 0; i < POSE_DIM; i++) {
+            const auto val = eigen_values(i);
+            ROS_DEBUG_STREAM("eigen value on dim " << i << " is: " << val);
+        }
+
     } else {
         ROS_WARN("Invalid Covariance!");
     }

@@ -48,7 +48,7 @@ class Estimator
     void vector2double();
     void double2vector();
     bool failureDetection();
-    bool optimizationDegeneracyDetection(ceres::Problem &problem);
+    bool optimizationDegeneracyDetection(ceres::Problem &problem, const double eigen_thresh);
 
     enum SolverFlag
     {
