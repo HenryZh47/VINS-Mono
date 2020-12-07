@@ -620,7 +620,7 @@ void Estimator::double2vector()
 
 bool Estimator::failureDetection()
 {
-    if (f_manager.last_track_num < 2)
+    if (f_manager.last_track_num < 20)
     {
         ROS_INFO(" little feature %d", f_manager.last_track_num);
         //return true;
@@ -1177,12 +1177,13 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
 
         // find the eigenvalues of JtJ that smaller than a threshold
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
-        const auto eigen_values = eigen_result.eigenvalues();
+        auto eigen_values = eigen_result.eigenvalues();
+        optimization_eigen_values.clear();
         for (int i = 0; i < POSE_DIM; i++) {
             const auto val = eigen_values(i);
+            optimization_eigen_values.push_back(eigen_values(i));
             ROS_DEBUG_STREAM("eigen value on dim " << i << " is: " << val);
         }
-
     } else {
         ROS_WARN("Invalid Covariance!");
     }
