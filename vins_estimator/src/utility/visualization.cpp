@@ -15,6 +15,8 @@ ros::Publisher pub_keyframe_pose;
 ros::Publisher pub_keyframe_point;
 ros::Publisher pub_extrinsic;
 
+ros::Publisher pub_optimization_degeneracy;
+
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
 static double sum_of_path = 0;
@@ -35,6 +37,9 @@ void registerPub(ros::NodeHandle &n)
     pub_keyframe_point = n.advertise<sensor_msgs::PointCloud>("keyframe_point", 1000);
     pub_extrinsic = n.advertise<nav_msgs::Odometry>("extrinsic", 1000);
     pub_relo_relative_pose=  n.advertise<nav_msgs::Odometry>("relo_relative_pose", 1000);
+    
+    // optimization degeneracy pub
+    pub_optimization_degeneracy = n.advertise<std_msgs::Float32MultiArray>("optimization_degeneracy", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -419,4 +424,20 @@ void pubRelocalization(const Estimator &estimator)
     odometry.twist.twist.linear.y = estimator.relo_frame_index;
 
     pub_relo_relative_pose.publish(odometry);
+}
+
+void pubOptimizationDegeneracy(const Estimator &estimator) {
+    const auto values = estimator.optimization_eigen_values;
+
+    std_msgs::Float32MultiArray msg;
+    msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    msg.layout.dim[0].size = values.size();
+    msg.layout.dim[0].stride = 1;
+    msg.layout.dim[0].label = 'values';
+    msg.layout.data_offset = 0;
+
+    msg.data.insert(msg.data.end(), values.begin(), values.end());
+
+    // publish msg
+    pub_optimization_degeneracy.publish(msg);
 }

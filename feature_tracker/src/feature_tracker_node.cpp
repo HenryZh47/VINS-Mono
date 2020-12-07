@@ -85,9 +85,9 @@ void img_callback(const sensor_msgs::ImageConstPtr &img_msg)
         if (i != 1 || !STEREO_TRACK) {
             trackerData[i].readImage(ptr->image.rowRange(ROW * i, ROW * (i + 1)), img_msg->header.stamp.toSec());
             // henryzh47: print a msg if number of tracked features are low
-            if (trackerData[i].tracking_degenerated) {
-                ROS_WARN_STREAM("camera " << i << " tracking features low: " << trackerData[i].track_cnt.size());
-            }
+            // if (trackerData[i].tracking_degenerated) {
+            //     ROS_WARN_STREAM("camera " << i << " tracking features low: " << trackerData[i].track_cnt.size());
+            // }
         }
         else
         {

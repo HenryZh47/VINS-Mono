@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Header.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud.h>
@@ -29,6 +30,9 @@ extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
 extern int IMAGE_ROW, IMAGE_COL;
 
+// degeneracy publisher
+extern ros::Publisher pub_optimization_degeneracy;
+
 void registerPub(ros::NodeHandle &n);
 
 void pubLatestOdometry(const Eigen::Vector3d &P, const Eigen::Quaterniond &Q, const Eigen::Vector3d &V, const std_msgs::Header &header);
@@ -50,3 +54,5 @@ void pubTF(const Estimator &estimator, const std_msgs::Header &header);
 void pubKeyframe(const Estimator &estimator);
 
 void pubRelocalization(const Estimator &estimator);
+
+void pubOptimizationDegeneracy(const Estimator &estimator);
