@@ -1182,10 +1182,32 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
         for (int i = 0; i < POSE_DIM; i++) {
             const auto val = eigen_values(i);
             optimization_eigen_values.push_back(eigen_values(i));
-            ROS_DEBUG_STREAM("eigen value on dim " << i << " is: " << val);
+            ROS_WARN_STREAM("[COV INV] eigen value on dim " << i << " is: " << val);
         }
     } else {
         ROS_WARN("Invalid Covariance!");
+    }
+
+    // get Jacobian and compute hassian directly
+    ceres::Problem::EvaluateOptions eval_options;
+    eval_options.num_threads = 6;
+    // only care about jacobian on latest pose
+    eval_options.parameter_blocks.push_back(para_Pose[WINDOW_SIZE]);
+    ceres::CRSMatrix crs_J;
+    Eigen::MatrixXd J;
+    if (problem.Evaluate(eval_options, nullptr, nullptr, nullptr, &crs_J)) {
+        Utility::CRSMatrixToEigenMatrix(crs_J, &J);
+        // ROS_WARN_STREAM("jacobian: ROWS: " << J.rows() << " COLS: " << J.cols());
+        Eigen::MatrixXd JtJ = J.transpose() * J;
+        // ROS_WARN_STREAM("H: ROWS: " << H.rows() << " COLS: " << H.cols());
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
+        auto eigen_values = eigen_result.eigenvalues();
+        optimization_eigen_values.clear();
+        for (int i = 0; i < POSE_DIM; i++) {
+            const auto val = eigen_values(i);
+            optimization_eigen_values.push_back(eigen_values(i));
+            ROS_WARN_STREAM("[Direct Hessian] eigen value on dim " << i << " is: " << val);
+        }
     }
 
     return false;
