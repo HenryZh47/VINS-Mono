@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstring>
 #include <eigen3/Eigen/Dense>
+#include <ceres/ceres.h>
 
 class Utility
 {
@@ -141,6 +142,25 @@ class Utility
         return angle_degrees +
             two_pi * std::floor((-angle_degrees + T(180)) / two_pi);
     };
+
+    static void CRSMatrixToEigenMatrix(const ceres::CRSMatrix &crs_matrix,
+                                       Eigen::MatrixXd *eigen_matrix) {
+        eigen_matrix->resize(crs_matrix.num_rows, crs_matrix.num_cols);
+        eigen_matrix->setZero();
+
+        for (int row = 0; row < crs_matrix.num_rows; ++row) {
+            int start = crs_matrix.rows[row];
+            int end = crs_matrix.rows[row + 1] - 1;
+
+            for (int i = start; i <= end; i++) {
+            int col = crs_matrix.cols[i];
+            double value = crs_matrix.values[i];
+
+            (*eigen_matrix)(row, col) = value;
+            }
+        }
+    }
+
 };
 
 class FileSystemHelper
