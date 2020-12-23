@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     nav_msgs
     tf
     cv_bridge
+    message_generation
     )
 
 find_package(OpenCV REQUIRED)
@@ -30,7 +31,19 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
-catkin_package()
+add_message_files(
+  FILES
+  InformationEigenValues.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
+catkin_package(
+  CATKIN_DEPENDS message_runtime
+)
 
 add_executable(vins_estimator
     src/estimator_node.cpp
