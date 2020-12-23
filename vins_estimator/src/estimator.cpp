@@ -1162,18 +1162,15 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
 
     // pushback cov on pose parameters of last frame
     vector<pair<const double*, const double*> > cov_blocks;
-    double *last_pose_param = para_Pose[WINDOW_SIZE];
-    cov_blocks.push_back(std::make_pair(last_pose_param, last_pose_param));
+    cov_blocks.push_back(std::make_pair(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]));
 
     // compute and get covariance
-    Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor> cov_pose = Eigen::Matrix<double, SIZE_POSE, SIZE_POSE, Eigen::RowMajor>::Zero();
+    Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> cov_pose = Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor>::Zero();
     if (covariance.Compute(cov_blocks, &problem)) {
-        covariance.GetCovarianceBlockInTangentSpace(last_pose_param, last_pose_param, cov_pose.data());
+        covariance.GetCovarianceBlockInTangentSpace(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], cov_pose.data());
 
         // approximate information matrix with inverse of covariance
-        // take first six position dims (unit quaternion will lead to zero cov entries in last row)
-        Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> cov_position = cov_pose.block<POSE_DIM, POSE_DIM>(0, 0);
-        Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> JtJ = cov_position.inverse();
+        Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> JtJ = cov_pose.inverse();
 
         // find the eigenvalues of JtJ that smaller than a threshold
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
@@ -1197,9 +1194,8 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
     Eigen::MatrixXd J;
     if (problem.Evaluate(eval_options, nullptr, nullptr, nullptr, &crs_J)) {
         Utility::CRSMatrixToEigenMatrix(crs_J, &J);
-        // ROS_WARN_STREAM("jacobian: ROWS: " << J.rows() << " COLS: " << J.cols());
         Eigen::MatrixXd JtJ = J.transpose() * J;
-        // ROS_WARN_STREAM("H: ROWS: " << H.rows() << " COLS: " << H.cols());
+
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
         auto eigen_values = eigen_result.eigenvalues();
         optimization_eigen_values.clear();
