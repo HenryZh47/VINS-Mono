@@ -1180,9 +1180,8 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
         auto eigen_values = eigen_result.eigenvalues();
         optimization_eigen_values.clear();
         for (int i = 0; i < POSE_DIM; i++) {
-            const auto val = eigen_values(i);
             optimization_eigen_values.push_back(eigen_values(i));
-            ROS_WARN_STREAM("[COV INV] eigen value on dim " << i << " is: " << val);
+            // ROS_WARN_STREAM("[COV INV] eigen value on dim " << i << " is: " << val);
         }
     } else {
         ROS_WARN("Invalid Covariance!");
@@ -1203,9 +1202,7 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
         auto eigen_values = eigen_result.eigenvalues();
         optimization_eigen_values.clear();
         for (int i = 0; i < POSE_DIM; i++) {
-            const auto val = eigen_values(i);
             optimization_eigen_values.push_back(eigen_values(i));
-            ROS_WARN_STREAM("[Direct Hessian] eigen value on dim " << i << " is: " << val);
         }
     }
 
