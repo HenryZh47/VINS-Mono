@@ -1167,26 +1167,6 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
     vector<pair<const double*, const double*> > cov_blocks;
     cov_blocks.push_back(std::make_pair(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]));
 
-    // compute and get covariance
-    // Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> cov_pose = Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor>::Zero();
-    // if (covariance.Compute(cov_blocks, &problem)) {
-    //     covariance.GetCovarianceBlockInTangentSpace(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], cov_pose.data());
-
-    //     // approximate information matrix with inverse of covariance
-    //     Eigen::Matrix<double, POSE_DIM, POSE_DIM, Eigen::RowMajor> JtJ = cov_pose.inverse();
-
-    //     // find the eigenvalues of JtJ that smaller than a threshold
-    //     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
-    //     auto eigen_values = eigen_result.eigenvalues();
-    //     optimization_eigen_values.clear();
-    //     for (int i = 0; i < POSE_DIM; i++) {
-    //         optimization_eigen_values.push_back(eigen_values(i));
-    //         // ROS_WARN_STREAM("[COV INV] eigen value on dim " << i << " is: " << val);
-    //     }
-    // } else {
-    //     ROS_WARN("Invalid Covariance!");
-    // }
-
     // get Jacobian and compute hassian directly
     ceres::Problem::EvaluateOptions eval_options;
     eval_options.num_threads = 6;
