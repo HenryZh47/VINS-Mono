@@ -59,7 +59,7 @@ void readParameters(ros::NodeHandle &n)
     EQUALIZE = fsSettings["equalize"];
     FISHEYE = fsSettings["fisheye"];
     if (FISHEYE == 1)
-        FISHEYE_MASK = VINS_FOLDER_PATH + "config/fisheye_mask.jpg";
+        FISHEYE_MASK = VINS_FOLDER_PATH + "config/fisheye_mask_cam0.png";
     CAM_NAMES.push_back(config_file);
 
     TRACKING_CNT_THRESH = fsSettings["tracking_cnt_thresh"];
