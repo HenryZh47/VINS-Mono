@@ -20,7 +20,7 @@
 #include "../parameters.h"
 #include <fstream>
 
-#include "vins_estimator/InformationEigenValues.h"
+#include <vins_estimator/InformationEigenValues.h>
 
 extern ros::Publisher pub_odometry;
 extern ros::Publisher pub_path, pub_pose;
@@ -57,4 +57,4 @@ void pubKeyframe(const Estimator &estimator);
 
 void pubRelocalization(const Estimator &estimator);
 
-void pubOptimizationDegeneracy(const Estimator &estimator);
+void pubOptimizationDegeneracy(const Estimator &estimator,const std_msgs::Header &header);

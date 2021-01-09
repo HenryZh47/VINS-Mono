@@ -426,10 +426,11 @@ void pubRelocalization(const Estimator &estimator)
     pub_relo_relative_pose.publish(odometry);
 }
 
-void pubOptimizationDegeneracy(const Estimator &estimator) {
+void pubOptimizationDegeneracy(const Estimator &estimator,const std_msgs::Header &header) {
     const auto values = estimator.optimization_eigen_values;
 
     vins_estimator::InformationEigenValues msg;
+    msg.header = header;
     msg.x = estimator.optimization_eigen_values[0];
     msg.y = estimator.optimization_eigen_values[1];
     msg.z = estimator.optimization_eigen_values[2];

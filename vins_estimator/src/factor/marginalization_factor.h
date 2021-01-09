@@ -68,6 +68,8 @@ class MarginalizationInfo
     Eigen::MatrixXd linearized_jacobians;
     Eigen::VectorXd linearized_residuals;
     const double eps = 1e-8;
+    long latest_pose_addr;
+    Eigen::MatrixXd latestP_Information_matrix;
 
 };
 

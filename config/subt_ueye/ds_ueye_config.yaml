@@ -2,7 +2,7 @@
 
 #common parameters
 imu_topic: "/imu/data"
-image_topic: "/camera/image_raw/bright"
+image_topic: "/camera/image_raw"
 output_path: "/home/henryzh47/Documents"
 # depth_topic: "/velodyne_points"
 # laser_topic: "/velodyne_points"

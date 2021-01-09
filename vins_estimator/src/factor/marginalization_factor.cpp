@@ -261,8 +261,13 @@ void MarginalizationInfo::marginalize()
     }
     //ROS_DEBUG("thread summing up costs %f ms", t_thread_summing.toc());
     //ROS_INFO("A diff %f , b diff %f ", (A - tmp_A).sum(), (b - tmp_b).sum());
+    
+  
+    latestP_Information_matrix=A.block<6,6>(parameter_block_idx[latest_pose_addr],parameter_block_idx[latest_pose_addr]);
+    
 
 
+     
     //TODO
     Eigen::MatrixXd Amm = 0.5 * (A.block(0, 0, m, m) + A.block(0, 0, m, m).transpose());
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(Amm);

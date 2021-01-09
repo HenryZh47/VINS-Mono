@@ -328,7 +328,7 @@ void process()
                 pubRelocalization(estimator);
             
             // pub optimization degeneracy
-            pubOptimizationDegeneracy(estimator);
+            pubOptimizationDegeneracy(estimator,header);
 
             //ROS_ERROR("end: %f, at %f", img_msg->header.stamp.toSec(), ros::Time::now().toSec());
         }
