@@ -1231,12 +1231,12 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
                                eigen_result.eigenvalues()(3, 0).real() + eigen_result.eigenvalues()(4, 0).real() + eigen_result.eigenvalues()(5, 0).real();
 
             Eigen::VectorXd system_lambdas(6);
-            system_lambdas << (eigen_result.eigenvalues()(0, 0).real() / sum_lambda), //roll
-                (eigen_result.eigenvalues()(1, 0).real() / sum_lambda),               //pitch
-                (eigen_result.eigenvalues()(2, 0).real() / sum_lambda),               //yaw
-                (eigen_result.eigenvalues()(3, 0).real() / sum_lambda),               //x
-                (eigen_result.eigenvalues()(4, 0).real() / sum_lambda),               //y
-                (eigen_result.eigenvalues()(5, 0).real() / sum_lambda);               //z
+            system_lambdas << (eigen_result.eigenvalues()(0, 0).real() / sum_lambda), //x
+                (eigen_result.eigenvalues()(1, 0).real() / sum_lambda),               //y
+                (eigen_result.eigenvalues()(2, 0).real() / sum_lambda),               //z
+                (eigen_result.eigenvalues()(3, 0).real() / sum_lambda),               //roll
+                (eigen_result.eigenvalues()(4, 0).real() / sum_lambda),               //pitch
+                (eigen_result.eigenvalues()(5, 0).real() / sum_lambda);               //yaw
 
             int pos_min, pos_max;
             optimization_eigen_values.clear();
@@ -1246,17 +1246,17 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
             //  }
 
             // method1: Degeneracy
-            system_lambdas.tail<3>().minCoeff(&pos_min); // minimum eigenvalue between x, y, z only
-            //optimization_eigen_values.push_back(system_lambdas.tail<3>()[pos_min]*100.0);
+            system_lambdas.head<3>().minCoeff(&pos_min); // minimum eigenvalue between x, y, z only
+            optimization_eigen_values.push_back(system_lambdas.head<3>()[pos_min]*100.0);
             //cout << "[Filtering Utils] Degeneracy (degenerate if ~ 0): " << optimization_eigen_values << " %" << endl;
 
             // method2: Condition Number
-            system_lambdas.tail<3>().maxCoeff(&pos_max); // maximum eigenvalue between x, y, z only
-            //  optimization_eigen_values.push_back(system_lambdas.tail<3>()[pos_max]/system_lambdas.tail<3>()[pos_min]);
+            system_lambdas.head<3>().maxCoeff(&pos_max); // maximum eigenvalue between x, y, z only
+            //  optimization_eigen_values.push_back(system_lambdas.head<3>()[pos_max]/system_lambdas.head<3>()[pos_min]);
             //  cout << "[Filtering Utils] Condition Number (degenerate if big, want 1): " << optimization_eigen_values << endl;
 
             // method3: Inverse Condition Number
-            optimization_eigen_values.push_back(system_lambdas.tail<3>()[pos_min] / system_lambdas.tail<3>()[pos_max]);
+            //optimization_eigen_values.push_back(system_lambdas.head<3>()[pos_min] / system_lambdas.head<3>()[pos_max]);
            
         }
     }
