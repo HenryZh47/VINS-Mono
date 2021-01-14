@@ -15,7 +15,7 @@ ros::Publisher pub_keyframe_pose;
 ros::Publisher pub_keyframe_point;
 ros::Publisher pub_extrinsic;
 
-ros::Publisher pub_optimization_degeneracy;
+ros::Publisher pub_information_eigen;
 
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
@@ -39,7 +39,7 @@ void registerPub(ros::NodeHandle &n)
     pub_relo_relative_pose=  n.advertise<nav_msgs::Odometry>("relo_relative_pose", 1000);
     
     // optimization degeneracy pub
-    pub_optimization_degeneracy = n.advertise<vins_estimator::InformationEigenValues>("optimization_degeneracy", 1000);
+    pub_information_eigen = n.advertise<vins_estimator::InformationEigenValues>("information_eigen", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -426,10 +426,11 @@ void pubRelocalization(const Estimator &estimator)
     pub_relo_relative_pose.publish(odometry);
 }
 
-void pubOptimizationDegeneracy(const Estimator &estimator) {
+void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &header) {
     const auto values = estimator.optimization_eigen_values;
 
     vins_estimator::InformationEigenValues msg;
+    msg.header = header;
     msg.x = estimator.optimization_eigen_values[0];
     msg.y = estimator.optimization_eigen_values[1];
     msg.z = estimator.optimization_eigen_values[2];
@@ -438,5 +439,5 @@ void pubOptimizationDegeneracy(const Estimator &estimator) {
     msg.rz = estimator.optimization_eigen_values[5];
 
     // publish msg
-    pub_optimization_degeneracy.publish(msg);
+    pub_information_eigen.publish(msg);
 }

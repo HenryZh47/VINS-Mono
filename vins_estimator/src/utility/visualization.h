@@ -57,4 +57,4 @@ void pubKeyframe(const Estimator &estimator);
 
 void pubRelocalization(const Estimator &estimator);
 
-void pubOptimizationDegeneracy(const Estimator &estimator);
+void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &header);
