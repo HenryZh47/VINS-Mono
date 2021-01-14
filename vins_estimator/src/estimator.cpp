@@ -1159,14 +1159,6 @@ void Estimator::setReloFrame(double _frame_stamp, int _frame_index, vector<Vecto
 bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const double eigen_thresh) {        
     const int POSE_DIM = 6;
 
-    ceres::Covariance::Options cov_options;
-    cov_options.num_threads = 6;
-    ceres::Covariance covariance(cov_options);
-
-    // pushback cov on pose parameters of last frame
-    vector<pair<const double*, const double*> > cov_blocks;
-    cov_blocks.push_back(std::make_pair(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]));
-
     // get Jacobian and compute hassian directly
     ceres::Problem::EvaluateOptions eval_options;
     eval_options.num_threads = 6;
