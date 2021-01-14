@@ -21,6 +21,7 @@
 #include <fstream>
 
 #include "vins_estimator/InformationEigenValues.h"
+#include "vins_estimator/DegeneracyMatric.h"
 
 extern ros::Publisher pub_odometry;
 extern ros::Publisher pub_path, pub_pose;

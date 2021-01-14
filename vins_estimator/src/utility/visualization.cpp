@@ -16,6 +16,7 @@ ros::Publisher pub_keyframe_point;
 ros::Publisher pub_extrinsic;
 
 ros::Publisher pub_information_eigen;
+ros::Publisher pub_degeneracy_matric;
 
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
@@ -40,6 +41,7 @@ void registerPub(ros::NodeHandle &n)
     
     // optimization degeneracy pub
     pub_information_eigen = n.advertise<vins_estimator::InformationEigenValues>("information_eigen", 1000);
+    pub_degeneracy_matric = n.advertise<vins_estimator::DegeneracyMatric>("degeneracy_metric", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -429,15 +431,24 @@ void pubRelocalization(const Estimator &estimator)
 void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &header) {
     const auto values = estimator.optimization_eigen_values;
 
-    vins_estimator::InformationEigenValues msg;
-    msg.header = header;
-    msg.x = estimator.optimization_eigen_values[0];
-    msg.y = estimator.optimization_eigen_values[1];
-    msg.z = estimator.optimization_eigen_values[2];
-    msg.rx = estimator.optimization_eigen_values[3];
-    msg.ry = estimator.optimization_eigen_values[4];
-    msg.rz = estimator.optimization_eigen_values[5];
+    // publish information_msg
+    vins_estimator::InformationEigenValues information_msg;
+    information_msg.header = header;
+    information_msg.x = estimator.optimization_eigen_values[0];
+    information_msg.y = estimator.optimization_eigen_values[1];
+    information_msg.z = estimator.optimization_eigen_values[2];
+    information_msg.rx = estimator.optimization_eigen_values[3];
+    information_msg.ry = estimator.optimization_eigen_values[4];
+    information_msg.rz = estimator.optimization_eigen_values[5];
 
-    // publish msg
-    pub_information_eigen.publish(msg);
+    pub_information_eigen.publish(information_msg);
+
+    // publish degeneracy matric
+    vins_estimator::DegeneracyMatric degeneracy_matric_msg;
+    degeneracy_matric_msg.header = header;
+    degeneracy_matric_msg.min_val = estimator.degeneracy_matric[0];
+    degeneracy_matric_msg.max_val = estimator.degeneracy_matric[1];
+    degeneracy_matric_msg.min_max_ratio = estimator.degeneracy_matric[2];
+    
+    pub_degeneracy_matric.publish(degeneracy_matric_msg);
 }

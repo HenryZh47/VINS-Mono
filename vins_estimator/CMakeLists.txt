@@ -34,6 +34,7 @@ include_directories(
 add_message_files(
   FILES
   InformationEigenValues.msg
+  DegeneracyMatric.msg
 )
 
 generate_messages(
