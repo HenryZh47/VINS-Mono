@@ -81,8 +81,9 @@ void Estimator::clearState()
     drift_correct_t = Vector3d::Zero();
 
     // allocate on init
-    optimization_eigen_values.reserve(SIZE_POSE-1);
-    degeneracy_matric.reserve(3);
+    optimization_eigen_values.resize(SIZE_POSE-1);
+    degeneracy_metric.resize(4);
+    degeneracy_metric_avg.resize(4);
 }
 
 void Estimator::processIMU(double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity)
@@ -1173,12 +1174,11 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
 
         Eigen::EigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
         auto eigen_values = eigen_result.eigenvalues();
-        optimization_eigen_values.clear();
         for (int i = 0; i < POSE_DIM; i++) {
-            optimization_eigen_values.push_back(eigen_values(i, 0).real());
+            optimization_eigen_values[i] = eigen_values(i, 0).real();
         }
 
-        // calcuate degeneracy matric
+        // calcuate degeneracy metric
         double sum_lambda = eigen_values(0, 0).real() + eigen_values(1, 0).real() + eigen_values(2, 0).real() +
                             eigen_values(3, 0).real() + eigen_values(4, 0).real() + eigen_values(5, 0).real();
 
@@ -1192,13 +1192,16 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
 
         double pos_min, pos_max;
 
-        // method1: Degeneracy
-        degeneracy_matric.clear();
         system_lambdas.tail<3>().minCoeff(&pos_min); // minimum eigenvalue between x, y, z only
         system_lambdas.tail<3>().maxCoeff(&pos_max); // maximum eigenvalue between x, y, z only
-        degeneracy_matric.push_back(system_lambdas.tail<3>()[pos_min]*100.0);
-        degeneracy_matric.push_back(system_lambdas.tail<3>()[pos_max]*100.0);
-        degeneracy_matric.push_back(system_lambdas.tail<3>()[pos_min] / system_lambdas.tail<3>()[pos_max]);
+        degeneracy_metric[1] = system_lambdas.tail<3>()[pos_min]*100.0; // min
+        degeneracy_metric[2] = system_lambdas.tail<3>()[pos_max]*100.0; // max
+        degeneracy_metric[3] = system_lambdas.tail<3>()[pos_min] / system_lambdas.tail<3>()[pos_max]; // min max ratio
+        // TODO (henryzh47): negative log entropy from information matrix
+
+        // average filtering
+        degeneracy_metric_avg.clear();
+
     }
 
     return false;

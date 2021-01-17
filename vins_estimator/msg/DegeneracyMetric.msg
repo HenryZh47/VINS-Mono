@@ -1,0 +1,5 @@
+Header header
+float64 min_val
+float64 max_val
+float64 min_max_ratio
+float64 negative_log_entropy
