@@ -17,6 +17,7 @@ ros::Publisher pub_extrinsic;
 
 ros::Publisher pub_information_eigen;
 ros::Publisher pub_degeneracy_metric;
+ros::Publisher pub_degeneracy_metric_avg;
 
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
@@ -42,6 +43,7 @@ void registerPub(ros::NodeHandle &n)
     // optimization degeneracy pub
     pub_information_eigen = n.advertise<vins_estimator::InformationEigenValues>("information_eigen", 1000);
     pub_degeneracy_metric = n.advertise<vins_estimator::DegeneracyMetric>("degeneracy_metric", 1000);
+    pub_degeneracy_metric_avg = n.advertise<vins_estimator::DegeneracyMetric>("degeneracy_metric_avg", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -451,4 +453,14 @@ void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &hea
     degeneracy_metric_msg.min_max_ratio = estimator.degeneracy_metric[2];
     
     pub_degeneracy_metric.publish(degeneracy_metric_msg);
+
+    // publish degeneracy metric with average filter
+    vins_estimator::DegeneracyMetric degeneracy_metric_avg_msg;
+    degeneracy_metric_avg_msg.header = header;
+    degeneracy_metric_avg_msg.min_val = estimator.degeneracy_metric_avg[0];
+    degeneracy_metric_avg_msg.max_val = estimator.degeneracy_metric_avg[1];
+    degeneracy_metric_avg_msg.min_max_ratio = estimator.degeneracy_metric_avg[2];
+    
+    pub_degeneracy_metric_avg.publish(degeneracy_metric_avg_msg);
+
 }

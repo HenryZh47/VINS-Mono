@@ -1172,35 +1172,39 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
         Utility::CRSMatrixToEigenMatrix(crs_J, &J);
         Eigen::MatrixXd JtJ = J.transpose() * J;
 
-        Eigen::EigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> eigen_result(JtJ);
         auto eigen_values = eigen_result.eigenvalues();
+
         for (int i = 0; i < POSE_DIM; i++) {
-            optimization_eigen_values[i] = eigen_values(i, 0).real();
+            optimization_eigen_values[i] = eigen_values(i);
         }
 
         // calcuate degeneracy metric
-        double sum_lambda = eigen_values(0, 0).real() + eigen_values(1, 0).real() + eigen_values(2, 0).real() +
-                            eigen_values(3, 0).real() + eigen_values(4, 0).real() + eigen_values(5, 0).real();
+        double sum_lambda = eigen_values(0) + eigen_values(1) + eigen_values(2);
+                            // eigen_values(3, 0).real() + eigen_values(4, 0).real() + eigen_values(5, 0).real();
 
         Eigen::VectorXd system_lambdas(6);
-        system_lambdas << (eigen_values(0, 0).real() / sum_lambda), //roll
-            (eigen_values(1, 0).real() / sum_lambda),               //pitch
-            (eigen_values(2, 0).real() / sum_lambda),               //yaw
-            (eigen_values(3, 0).real() / sum_lambda),               //x
-            (eigen_values(4, 0).real() / sum_lambda),               //y
-            (eigen_values(5, 0).real() / sum_lambda);               //z
+        system_lambdas << (eigen_values(0) / sum_lambda), //roll
+            (eigen_values(1) / sum_lambda),               //pitch
+            (eigen_values(2) / sum_lambda),               //yaw
+            (eigen_values(3) / sum_lambda),               //x
+            (eigen_values(4) / sum_lambda),               //y
+            (eigen_values(5) / sum_lambda);               //z
 
         double pos_min, pos_max;
 
-        system_lambdas.tail<3>().minCoeff(&pos_min); // minimum eigenvalue between x, y, z only
-        system_lambdas.tail<3>().maxCoeff(&pos_max); // maximum eigenvalue between x, y, z only
-        degeneracy_metric[1] = system_lambdas.tail<3>()[pos_min]*100.0; // min
-        degeneracy_metric[2] = system_lambdas.tail<3>()[pos_max]*100.0; // max
-        degeneracy_metric[3] = system_lambdas.tail<3>()[pos_min] / system_lambdas.tail<3>()[pos_max]; // min max ratio
+        system_lambdas.head<3>().minCoeff(&pos_min); // minimum eigenvalue between x, y, z only
+        system_lambdas.head<3>().maxCoeff(&pos_max); // maximum eigenvalue between x, y, z only
+        degeneracy_metric[0] = system_lambdas.head<3>()[pos_min]*100.0; // min
+        degeneracy_metric[1] = system_lambdas.head<3>()[pos_max]*100.0; // max
+        degeneracy_metric[2] = system_lambdas.head<3>()[pos_min] / system_lambdas.head<3>()[pos_max]; // min max ratio
         // TODO (henryzh47): negative log entropy from information matrix
 
         // average filtering
-        degeneracy_metric_avg.clear();
+        avg_filter_n++;
+        for (size_t i = 0; i < degeneracy_metric.size(); i++) {
+            degeneracy_metric_avg[i] = degeneracy_metric_avg[i] + (degeneracy_metric[i] - degeneracy_metric_avg[i]) / avg_filter_n;
+        }
 
     }
 

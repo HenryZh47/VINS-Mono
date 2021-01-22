@@ -140,7 +140,7 @@ class Estimator
     // optimization degeneracy vector
     vector<double> optimization_eigen_values;
     vector<double> degeneracy_metric;
-    size_t num_frames;
+    size_t avg_filter_n;
     vector<double> degeneracy_metric_avg;
 
 };
