@@ -451,6 +451,7 @@ void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &hea
     degeneracy_metric_msg.min_val = estimator.degeneracy_metric[0];
     degeneracy_metric_msg.max_val = estimator.degeneracy_metric[1];
     degeneracy_metric_msg.min_max_ratio = estimator.degeneracy_metric[2];
+    degeneracy_metric_msg.negative_log_entropy = estimator.degeneracy_metric[3];
     
     pub_degeneracy_metric.publish(degeneracy_metric_msg);
 
@@ -460,6 +461,7 @@ void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &hea
     degeneracy_metric_avg_msg.min_val = estimator.degeneracy_metric_avg[0];
     degeneracy_metric_avg_msg.max_val = estimator.degeneracy_metric_avg[1];
     degeneracy_metric_avg_msg.min_max_ratio = estimator.degeneracy_metric_avg[2];
+    degeneracy_metric_avg_msg.negative_log_entropy = estimator.degeneracy_metric_avg[3];
     
     pub_degeneracy_metric_avg.publish(degeneracy_metric_avg_msg);
 

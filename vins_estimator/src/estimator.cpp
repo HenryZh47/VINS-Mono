@@ -831,6 +831,7 @@ void Estimator::optimization()
     if (optimizationDegeneracyDetection(problem, 50.0)) {
         printf("Detected degeneracy in optimization!");
     }
+    // if (marginalization_flag == MARGIN_SECOND_NEW) ROS_INFO("Marginalizing New Frame!");
     ROS_DEBUG("Optimization degeneracy costs: %f", t_cov.toc());
 
     double2vector();
@@ -1198,7 +1199,11 @@ bool Estimator::optimizationDegeneracyDetection(ceres::Problem &problem, const d
         degeneracy_metric[0] = system_lambdas.head<3>()[pos_min]*100.0; // min
         degeneracy_metric[1] = system_lambdas.head<3>()[pos_max]*100.0; // max
         degeneracy_metric[2] = system_lambdas.head<3>()[pos_min] / system_lambdas.head<3>()[pos_max]; // min max ratio
+
         // TODO (henryzh47): negative log entropy from information matrix
+        // from Redesigning SLAM for Arbitrary Multi-Camera Systems
+        auto negative_entropy = log(JtJ.determinant());
+        degeneracy_metric[3] = negative_entropy;
 
         // average filtering
         avg_filter_n++;
