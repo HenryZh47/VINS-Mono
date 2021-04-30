@@ -35,6 +35,15 @@ def main():
       image = np.zeros((res[1], res[0]), np.uint8)
       cv2.circle(image, (u0, v0), int(max(res)/2), (255), -1)
 
+      # draw subt ds led
+      left_led = np.array([[0,845], [303,850], [370,1010], [235, 1120], [245,1250], [435,1480], [435,1510], [90,1255], [0,1150]], np.int32)
+      left_led = (left_led / 2).astype(np.int32)
+      right_led = np.array([[2056,845], [2056-303,850], [2056-370,1010], [2056-235, 1120], [2056-245,1250], [2056-435,1480], [2056-435,1510], [2056-90,1255], [2056-0,1150]], np.int32)
+      right_led = (right_led / 2).astype(np.int32)
+      print(left_led)
+      print(right_led)
+      cv2.fillPoly(image, [left_led, right_led], (0,0,0))
+
       cv2.imshow('mask', image)
       cv2.waitKey(0)
       cv2.destroyAllWindows()
