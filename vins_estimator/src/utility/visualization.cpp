@@ -234,6 +234,19 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
         odometry.pose.pose.orientation.z = R.z();
         odometry.pose.pose.orientation.w = R.w();
 
+        // TODO henryzh47: add covariance here
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                odometry.pose.covariance[i*6+j] = estimator.pose_covariance[i*7+j];
+            }
+        }
+        // odometry.pose.covariance[0] = 0.01;
+        // odometry.pose.covariance[7] = 0.01;
+        // odometry.pose.covariance[14] = 0.01;
+        // odometry.pose.covariance[21] = 0.1;
+        // odometry.pose.covariance[28] = 0.1;
+        // odometry.pose.covariance[35] = 0.1;
+
         pub_camera_pose.publish(odometry);
 
         cameraposevisual.reset();

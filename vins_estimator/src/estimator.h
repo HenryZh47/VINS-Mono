@@ -138,6 +138,7 @@ class Estimator
     double relo_relative_yaw;
 
     // optimization degeneracy vector
+    double pose_covariance[SIZE_POSE * SIZE_POSE];
     vector<double> optimization_eigen_values;
     vector<double> degeneracy_metric;
     size_t avg_filter_n;
