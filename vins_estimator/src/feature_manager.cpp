@@ -1,4 +1,5 @@
 #include "feature_manager.h"
+#include <boost/math/distributions/normal.hpp>
 
 int FeaturePerId::endFrame()
 {
@@ -199,6 +200,7 @@ VectorXd FeatureManager::getDepthVector()
     return dep_vec;
 }
 
+// TODO (henryzh47): test triangulate uncertainty
 void FeatureManager::triangulate(Vector3d Ps[], Vector3d tic[], Matrix3d ric[])
 {
     for (auto &it_per_id : feature)
@@ -385,4 +387,86 @@ double FeatureManager::compensatedParallax2(const FeaturePerId &it_per_id, int f
     ans = max(ans, sqrt(min(du * du + dv * dv, du_comp * du_comp + dv_comp * dv_comp)));
 
     return ans;
+}
+
+// henryzh47: depth filter functions
+void FeatureManager::setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]) {
+    int feature_index = -1;
+    for (auto &it_per_id : feature)
+    {
+        it_per_id.used_num = it_per_id.feature_per_frame.size();
+        if (!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
+            continue;
+
+        it_per_id.estimated_depth = 1.0 / x(++feature_index);
+        //ROS_INFO("feature id %d , start_frame %d, depth %f ", it_per_id->feature_id, it_per_id-> start_frame, it_per_id->estimated_depth);
+        if (it_per_id.estimated_depth < 0)
+        {
+            it_per_id.solve_flag = 2;
+        }
+        else
+            it_per_id.solve_flag = 1;
+
+        // henryzh47: update feature depth filter
+        auto tau2 = dfComputeTau(it_per_id, Ps, tic, ric);
+        dfUpdateSeed(1.0/x(feature_index), tau2, it_per_id);
+    }
+}
+
+double FeatureManager::dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]) {
+    double fx = FOCAL_LENGTH;
+    double px_error_angle = atan(PX_NOISE/(2.0*fx))*2.0;
+
+    // get transform from first feature frame to latest feature frame
+    int ref_i = f_per_id.start_frame;
+    int cur_i = f_per_id.endFrame();
+    Eigen::Vector3d ref_t = Ps[ref_i] + Rs[ref_i] * tic[0];
+    Eigen::Matrix3d ref_R = Rs[ref_i] * ric[0];
+
+    Eigen::Vector3d cur_t = Ps[cur_i] + Rs[cur_i] * tic[0];
+    // Eigen::Matrix3d cur_R = Rs[cur_i] * ric[0];
+
+    Eigen::Vector3d t = ref_R.transpose() * (cur_t - ref_t);
+    // Eigen::Matrix3d R = ref_R.transpose() * cur_R;
+
+    // use law of chord to compute 1 pixel error -> depth error
+    Eigen::Vector3d f = f_per_id.feature_per_frame[0].point;
+    double z = f_per_id.estimated_depth;
+    Eigen::Vector3d a = f * z - t;
+    double t_norm = t.norm();
+    double a_norm = a.norm();
+
+    double alpha = acos(f.dot(t)/t_norm); // dot product
+    double beta = acos(a.dot(-t)/(t_norm*a_norm)); // dot product
+    double beta_plus = beta + px_error_angle;
+    double gamma_plus = PI-alpha-beta_plus; // triangle angles sum to PI
+    double z_plus = t_norm*sin(beta_plus)/sin(gamma_plus); // law of sines
+
+    return (z_plus - z); // tau
+}
+
+void FeatureManager::dfUpdateSeed(const double inv_depth, const double tau2, FeaturePerId &f_per_id) {
+    double norm_scale = sqrt(f_per_id.sigma2 + tau2);
+    if (std::isnan(norm_scale)) return;
+    boost::math::normal_distribution<double> nd(f_per_id.mu, norm_scale);
+    double s2 = 1./(1./f_per_id.sigma2 + 1./tau2);
+    double m = s2 * (f_per_id.mu/f_per_id.sigma2 + inv_depth/tau2);
+
+    double C1 = f_per_id.a / (f_per_id.a + f_per_id.b) * boost::math::pdf(nd, inv_depth);
+    double C2 = f_per_id.b / (f_per_id.a + f_per_id.b) * 1./f_per_id.z_range;
+
+    double normalized_constant = C1 + C2;
+    C1 /= normalized_constant;
+    C2 /= normalized_constant;
+
+    double f = C1 * (f_per_id.a + 1.) / (f_per_id.a + f_per_id.b + 1.) + C2 * f_per_id.a / (f_per_id.a + f_per_id.b + 1.);
+    double e = C1*(f_per_id.a+1.)*(f_per_id.a+2.)/((f_per_id.a+f_per_id.b+1.)*(f_per_id.a+f_per_id.b+2.))
+               + C2*f_per_id.a*(f_per_id.a+1.0f)/((f_per_id.a+f_per_id.b+1.0f)*(f_per_id.a+f_per_id.b+2.0f));
+
+    // update
+    double mu_new = C1*m + C2*f_per_id.mu;
+    f_per_id.sigma2 = C1*(s2+m*m) + C2*(f_per_id.sigma2 + f_per_id.mu*f_per_id.mu) - mu_new*mu_new;
+    f_per_id.mu = mu_new;
+    f_per_id.a = (e-f)/(f-e/f);
+    f_per_id.b = f_per_id.a * (1.0-f)/f;
 }
