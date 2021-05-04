@@ -595,7 +595,10 @@ void Estimator::double2vector()
     VectorXd dep = f_manager.getDepthVector();
     for (int i = 0; i < f_manager.getFeatureCount(); i++)
         dep(i) = para_Feature[i][0];
-    f_manager.setDepth(dep);
+
+    // henryzh47: add latest pose estimates to set depth to update depth filter
+    f_manager.setDepth(dep, Ps, &(tic[0]), &(ric[0]));
+
     if (ESTIMATE_TD)
         td = para_Td[0][0];
 
