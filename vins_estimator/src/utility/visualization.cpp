@@ -300,9 +300,11 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         // add uncertainty
         inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
     }
-    pub_point_cloud.publish(point_cloud);
-
+    inv_depth_uncertainty.name = 'rgb';
+    point_cloud.channels.push_back(inv_depth_uncertainty);
     depth_filter_cloud.channels.push_back(inv_depth_uncertainty);
+
+    pub_point_cloud.publish(point_cloud);
     pub_depth_filter_cloud.publish(depth_filter_cloud);
 
     // pub margined potin
