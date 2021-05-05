@@ -31,6 +31,8 @@ extern ros::Publisher pub_ref_pose, pub_cur_pose;
 extern ros::Publisher pub_key;
 extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
+// henryzh47: pub depth filter cloud
+extern ros::Publisher pub_depth_filter_cloud;
 extern int IMAGE_ROW, IMAGE_COL;
 
 void registerPub(ros::NodeHandle &n);

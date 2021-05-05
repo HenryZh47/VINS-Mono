@@ -19,6 +19,9 @@ ros::Publisher pub_information_eigen;
 ros::Publisher pub_degeneracy_metric;
 ros::Publisher pub_degeneracy_metric_avg;
 
+// henryzh47: pub depth filter cloud
+ros::Publisher pub_depth_filter_cloud;
+
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
 static double sum_of_path = 0;
@@ -44,6 +47,9 @@ void registerPub(ros::NodeHandle &n)
     pub_information_eigen = n.advertise<vins_estimator::InformationEigenValues>("information_eigen", 1000);
     pub_degeneracy_metric = n.advertise<vins_estimator::DegeneracyMetric>("degeneracy_metric", 1000);
     pub_degeneracy_metric_avg = n.advertise<vins_estimator::DegeneracyMetric>("degeneracy_metric_avg", 1000);
+
+    // depth filter cloud
+    pub_depth_filter_cloud = n.advertise<sensor_msgs::PointCloud>("depth_filter_cloud", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -262,6 +268,10 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
     point_cloud.header = header;
     loop_point_cloud.header = header;
 
+    // henryzh47: also pub depth filter cloud
+    sensor_msgs::PointCloud depth_filter_cloud;
+    sensor_msgs::ChannelFloat32 inv_depth_uncertainty;
+    depth_filter_cloud.header = header;
 
     for (auto &it_per_id : estimator.f_manager.feature)
     {
@@ -280,9 +290,20 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         p.y = w_pts_i(1);
         p.z = w_pts_i(2);
         point_cloud.points.push_back(p);
+
+        // henryzh47: also propagate depth filter cloud
+        Vector3d df_pts_i = it_per_id.feature_per_frame[0].point * (1.0 / it_per_id.mu);
+        Vector3d w_df_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * df_pts_i + estimator.tic[0]) + estimator.Ps[imu_i];
+        geometry_msgs::Point32 df_p;
+        df_p.x = w_df_pts_i(0); df_p.y = w_df_pts_i(1); df_p.z = w_df_pts_i(2);
+        depth_filter_cloud.points.push_back(df_p);
+        // add uncertainty
+        inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
     }
     pub_point_cloud.publish(point_cloud);
 
+    depth_filter_cloud.channels.push_back(inv_depth_uncertainty);
+    pub_depth_filter_cloud.publish(depth_filter_cloud);
 
     // pub margined potin
     sensor_msgs::PointCloud margin_cloud;
