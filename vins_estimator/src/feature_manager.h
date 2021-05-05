@@ -55,7 +55,7 @@ class FeaturePerId
     int solve_flag; // 0 haven't solve yet; 1 solve succ; 2 solve fail;
 
     // henryzh47: depth filter for depth uncertainty
-    bool dp_initialized;
+    bool df_initialized;
     double mu;      // mean of normal distribution (inverse depth)
     double sigma2;  // variance of normal distribution
     double a;        // a of Beta distribution: When high, probability of inlier is large.
@@ -67,7 +67,7 @@ class FeaturePerId
     FeaturePerId(int _feature_id, int _start_frame)
         : feature_id(_feature_id), start_frame(_start_frame),
           used_num(0), estimated_depth(-1.0), solve_flag(0),
-          dp_initialized(false), mu(-1.0), sigma2(2.0), a(10), b(10), z_range(10)
+          df_initialized(false), mu(-1.0), sigma2(2.0), a(10), b(10), z_range(10)
     {
     }
 
@@ -103,9 +103,16 @@ class FeatureManager
     int last_track_num;
 
     // henryzh47: depth filtering
-    void setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);  // overload for depth filtering
-    double dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);  // compute depth measurement uncertainty with camera pose and px error angle
-    void dfUpdateSeed(const double inv_depth, const double tau2, FeaturePerId &f_per_id); // update feature depth seed
+    // get feature depth info from previous frame to initialize depth filter properties for current frame
+    bool getFrameDepthInfo(int frame_count, double &depth_mean, double &depth_min);
+    // overload method for depth filtering
+    void setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
+    // compute depth measurement uncertainty with camera pose and px error angle
+    double dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
+    // initialize depth filter properties
+    void dfInit(const double &depth_mean, const double &depth_min, FeaturePerId &f_per_id);
+    // update feature depth seed
+    void dfUpdateSeed(const double inv_depth, const double tau2, FeaturePerId &f_per_id);
 
   private:
     double compensatedParallax2(const FeaturePerId &it_per_id, int frame_count);
