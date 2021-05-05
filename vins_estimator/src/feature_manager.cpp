@@ -1,5 +1,6 @@
 #include "feature_manager.h"
 #include <boost/math/distributions/normal.hpp>
+#include <vector>
 
 int FeaturePerId::endFrame()
 {
@@ -50,6 +51,10 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
     double parallax_sum = 0;
     int parallax_num = 0;
     last_track_num = 0;
+
+    double depth_mean, depth_min;
+    bool is_valid_prev_depth = getFrameDepthInfo(frame_count, depth_mean, depth_min);
+
     for (auto &id_pts : image)
     {
         FeaturePerFrame f_per_fra(id_pts.second[0].second, td);
@@ -69,6 +74,15 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
         {
             it->feature_per_frame.push_back(f_per_fra);
             last_track_num++;
+        }
+
+        // henryzh47: also initialize feature depth filter properties
+        if (is_valid_prev_depth) {
+            if (it == feature.end()) {
+                dfInit(depth_mean, depth_min, feature.back());
+            } else {
+                dfInit(depth_mean, depth_min, *it);
+            }
         }
     }
 
@@ -390,6 +404,32 @@ double FeatureManager::compensatedParallax2(const FeaturePerId &it_per_id, int f
 }
 
 // henryzh47: depth filter functions
+bool FeatureManager::getFrameDepthInfo(int frame_count, double &depth_mean, double &depth_min) {
+    if (frame_count < 2) {
+        ROS_WARN("Not enough frames to get depth info for detph filter initialization");
+        return false;
+    }
+
+    size_t frame_feature_count = 0;
+    double depth_sum = 0.0;
+    depth_min = std::numeric_limits<double>::max();
+    for (auto &it_per_id : feature) {
+        if (it_per_id.solve_flag == 1) {
+            // valid depth
+            depth_sum += it_per_id.estimated_depth;
+            depth_min = fmin(it_per_id.estimated_depth, depth_min);
+            frame_feature_count++;
+        }
+    }
+
+    if (frame_feature_count == 0) {
+        ROS_WARN("Cannot get scene depth from previous frame during depth filter initialization");
+        return false;
+    }
+    depth_mean = depth_sum / frame_feature_count;
+    return true;
+}
+
 void FeatureManager::setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]) {
     int feature_index = -1;
     for (auto &it_per_id : feature)
@@ -403,13 +443,20 @@ void FeatureManager::setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], 
         if (it_per_id.estimated_depth < 0)
         {
             it_per_id.solve_flag = 2;
+            // TODO (henryzh47): here make feature uncertianty big
         }
         else
+        {
             it_per_id.solve_flag = 1;
 
-        // henryzh47: update feature depth filter
-        auto tau2 = dfComputeTau(it_per_id, Ps, tic, ric);
-        dfUpdateSeed(1.0/x(feature_index), tau2, it_per_id);
+            // henryzh47: update feature depth filter
+            if (it_per_id.df_initialized) {
+                double z = x(feature_index);
+                double tau = dfComputeTau(it_per_id, Ps, tic, ric);
+                double tau_inv = 0.5 * (1.0/max(0.0000001, z-tau) - 1.0/(z+tau));
+                dfUpdateSeed(1.0/z, tau_inv*tau_inv, it_per_id);
+            }
+        }
     }
 }
 
@@ -443,6 +490,15 @@ double FeatureManager::dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vecto
     double z_plus = t_norm*sin(beta_plus)/sin(gamma_plus); // law of sines
 
     return (z_plus - z); // tau
+}
+
+void FeatureManager::dfInit(const double &depth_mean, const double &depth_min, FeaturePerId &f_per_id) {
+    f_per_id.a = 10.0;
+    f_per_id.b = 10.0;
+    f_per_id.mu = 1.0 / depth_mean;
+    f_per_id.z_range = 1.0 / depth_min;
+    f_per_id.sigma2 = f_per_id.z_range * f_per_id.z_range / 36;
+    f_per_id.df_initialized = true;
 }
 
 void FeatureManager::dfUpdateSeed(const double inv_depth, const double tau2, FeaturePerId &f_per_id) {
