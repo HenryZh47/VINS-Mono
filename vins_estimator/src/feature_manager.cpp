@@ -78,10 +78,8 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
 
         // henryzh47: also initialize feature depth filter properties
         if (is_valid_prev_depth) {
-            if (it == feature.end()) {
-                dfInit(depth_mean, depth_min, feature.back());
-            } else {
-                dfInit(depth_mean, depth_min, *it);
+            if (it !=feature.end() && !it->df_initialized && it->solve_flag == 1) {
+                dfInit(it->estimated_depth, depth_min, *it);
             }
         }
     }
@@ -316,6 +314,18 @@ void FeatureManager::removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3
                     it->estimated_depth = dep_j;
                 else
                     it->estimated_depth = INIT_DEPTH;
+
+                // henryzh47: also shift depth filter points
+                if (it->df_initialized) {
+                    Eigen::Vector3d pts_i = uv_i * (1.0/it->mu);
+                    Eigen::Vector3d w_pts_i = marg_R * pts_i + marg_P;
+                    Eigen::Vector3d pts_j = new_R.transpose() * (w_pts_i - new_P);
+                    double dep_j = pts_j(2);
+                    if (dep_j > 0)
+                        it->mu = 1.0/dep_j;
+                    else
+                        it->mu = 1.0/INIT_DEPTH;
+                }
             }
         }
         // remove tracking-lost feature after marginalize
@@ -451,8 +461,9 @@ void FeatureManager::setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], 
 
             // henryzh47: update feature depth filter
             if (it_per_id.df_initialized) {
-                double z = x(feature_index);
-                double tau = dfComputeTau(it_per_id, Ps, tic, ric);
+                double z = it_per_id.estimated_depth;
+                // double tau = dfComputeTau(it_per_id, Ps, tic, ric);
+                double tau = 0.5;
                 double tau_inv = 0.5 * (1.0/max(0.0000001, z-tau) - 1.0/(z+tau));
                 dfUpdateSeed(1.0/z, tau_inv*tau_inv, it_per_id);
             }
@@ -489,6 +500,7 @@ double FeatureManager::dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vecto
     double gamma_plus = PI-alpha-beta_plus; // triangle angles sum to PI
     double z_plus = t_norm*sin(beta_plus)/sin(gamma_plus); // law of sines
 
+    ROS_DEBUG_STREAM("depth filter computed tau for feature: " << f_per_id.feature_id << ", tau: " << (z_plus - z));
     return (z_plus - z); // tau
 }
 
@@ -496,9 +508,12 @@ void FeatureManager::dfInit(const double &depth_mean, const double &depth_min, F
     f_per_id.a = 10.0;
     f_per_id.b = 10.0;
     f_per_id.mu = 1.0 / depth_mean;
-    f_per_id.z_range = 1.0 / depth_min;
+    // f_per_id.z_range = 1.0 / depth_min;
+    f_per_id.z_range = 1.0 / 1.0;
     f_per_id.sigma2 = f_per_id.z_range * f_per_id.z_range / 36;
     f_per_id.df_initialized = true;
+    ROS_DEBUG_STREAM("depth filter initialized feature: " << f_per_id.feature_id << ", depth filter to depth: "
+                     << depth_mean << ", prev depth min: " << depth_min);
 }
 
 void FeatureManager::dfUpdateSeed(const double inv_depth, const double tau2, FeaturePerId &f_per_id) {
@@ -525,4 +540,7 @@ void FeatureManager::dfUpdateSeed(const double inv_depth, const double tau2, Fea
     f_per_id.mu = mu_new;
     f_per_id.a = (e-f)/(f-e/f);
     f_per_id.b = f_per_id.a * (1.0-f)/f;
+
+    ROS_DEBUG_STREAM("depth filter updated feature: " << f_per_id.feature_id << ", depth: " << 1.0 / f_per_id.mu
+                     << ", sigma2: " << f_per_id.sigma2 << ", a: " << f_per_id.a << ", b: " << f_per_id.b);
 }
