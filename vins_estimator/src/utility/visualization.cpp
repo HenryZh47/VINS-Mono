@@ -292,13 +292,15 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         point_cloud.points.push_back(p);
 
         // henryzh47: also propagate depth filter cloud
-        Vector3d df_pts_i = it_per_id.feature_per_frame[0].point * (1.0 / it_per_id.mu);
-        Vector3d w_df_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * df_pts_i + estimator.tic[0]) + estimator.Ps[imu_i];
-        geometry_msgs::Point32 df_p;
-        df_p.x = w_df_pts_i(0); df_p.y = w_df_pts_i(1); df_p.z = w_df_pts_i(2);
-        depth_filter_cloud.points.push_back(df_p);
-        // add uncertainty
-        inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
+        if (it_per_id.df_initialized) {
+            Vector3d df_pts_i = it_per_id.feature_per_frame[0].point * (1.0 / it_per_id.mu);
+            Vector3d w_df_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * df_pts_i + estimator.tic[0]) + estimator.Ps[imu_i];
+            geometry_msgs::Point32 df_p;
+            df_p.x = w_df_pts_i(0); df_p.y = w_df_pts_i(1); df_p.z = w_df_pts_i(2);
+            depth_filter_cloud.points.push_back(df_p);
+            // add uncertainty
+            inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
+        }
     }
     inv_depth_uncertainty.name = 'rgb';
     point_cloud.channels.push_back(inv_depth_uncertainty);
