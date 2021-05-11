@@ -509,11 +509,11 @@ void FeatureManager::dfInit(const double &depth_mean, const double &depth_min, F
     f_per_id.b = 10.0;
     f_per_id.mu = 1.0 / depth_mean;
     // f_per_id.z_range = 1.0 / depth_min;
-    f_per_id.z_range = 1.0 / 1.0;
+    f_per_id.z_range = 1.0 / 0.5;
     f_per_id.sigma2 = f_per_id.z_range * f_per_id.z_range / 36;
     f_per_id.df_initialized = true;
     ROS_DEBUG_STREAM("depth filter initialized feature: " << f_per_id.feature_id << ", depth filter to depth: "
-                     << depth_mean << ", prev depth min: " << depth_min);
+                     << depth_mean << ", sigma2: " << f_per_id.sigma2);
 }
 
 void FeatureManager::dfUpdateSeed(const double inv_depth, const double tau2, FeaturePerId &f_per_id) {
