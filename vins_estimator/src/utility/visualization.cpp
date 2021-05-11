@@ -21,6 +21,12 @@ ros::Publisher pub_degeneracy_metric_avg;
 
 // henryzh47: pub depth filter cloud
 ros::Publisher pub_depth_filter_cloud;
+// henryzh47: pub depth filter marker cloud
+ros::Publisher pub_inv_depth_uncertainty_text;
+ros::Publisher pub_depth_filter_associate_line;
+ros::Publisher pub_inv_depth_uncertainty_text_delete;
+
+std::ostringstream ss_text_double;
 
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
@@ -50,6 +56,9 @@ void registerPub(ros::NodeHandle &n)
 
     // depth filter cloud
     pub_depth_filter_cloud = n.advertise<sensor_msgs::PointCloud>("depth_filter_cloud", 1000);
+    pub_inv_depth_uncertainty_text = n.advertise<visualization_msgs::MarkerArray>("inv_depth_uncertainty_text", 1000);
+    pub_inv_depth_uncertainty_text_delete = n.advertise<visualization_msgs::Marker>("inv_depth_uncertainty_text_detete", 1000);
+    pub_depth_filter_associate_line = n.advertise<visualization_msgs::MarkerArray>("depth_filter_associate_line", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -271,7 +280,21 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
     // henryzh47: also pub depth filter cloud
     sensor_msgs::PointCloud depth_filter_cloud;
     sensor_msgs::ChannelFloat32 inv_depth_uncertainty;
+    inv_depth_uncertainty.name = 'rgb';
     depth_filter_cloud.header = header;
+
+    // henryzh47: pub uncertainty values
+    visualization_msgs::MarkerArray inv_depth_uncertainty_text;
+    inv_depth_uncertainty_text.markers.reserve(estimator.f_manager.feature.size());
+    ss_text_double.precision(2);
+    // pub line associations
+    visualization_msgs::MarkerArray depth_filter_associate_line;
+    // temp marker to delete prev each frame
+    visualization_msgs::Marker marker_delete;
+    marker_delete.header = header;
+    marker_delete.action = visualization_msgs::Marker::DELETEALL;
+    visualization_msgs::MarkerArray marker_array_delete;
+    marker_array_delete.markers.push_back(marker_delete);
 
     for (auto &it_per_id : estimator.f_manager.feature)
     {
@@ -300,14 +323,40 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
             depth_filter_cloud.points.push_back(df_p);
             // add uncertainty
             inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
+            // add text for uncertainty
+            visualization_msgs::Marker inv_depth_uncertainty_text_one;
+            inv_depth_uncertainty_text_one.header = header;
+            inv_depth_uncertainty_text_one.id = it_per_id.feature_id;
+            inv_depth_uncertainty_text_one.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+            inv_depth_uncertainty_text_one.action = visualization_msgs::Marker::ADD;
+            inv_depth_uncertainty_text_one.pose.position.x = df_p.x;
+            inv_depth_uncertainty_text_one.pose.position.y = df_p.y;
+            inv_depth_uncertainty_text_one.pose.position.z = df_p.z+0.07;
+            inv_depth_uncertainty_text_one.pose.orientation.x = 0.0;
+            inv_depth_uncertainty_text_one.pose.orientation.y = 0.0;
+            inv_depth_uncertainty_text_one.pose.orientation.z = 0.0;
+            inv_depth_uncertainty_text_one.pose.orientation.w = 1.0;
+            inv_depth_uncertainty_text_one.scale.x = 0.1;
+            inv_depth_uncertainty_text_one.scale.y = 0.1;
+            inv_depth_uncertainty_text_one.scale.z = 0.1;
+            inv_depth_uncertainty_text_one.color.a = 1.0;
+            inv_depth_uncertainty_text_one.color.r = 1.0;
+            inv_depth_uncertainty_text_one.color.g = 1.0;
+            inv_depth_uncertainty_text_one.color.b = 1.0;
+            ss_text_double << sqrt(it_per_id.sigma2);
+            inv_depth_uncertainty_text_one.text = ss_text_double.str();
+            ss_text_double.str(std::string());
+            inv_depth_uncertainty_text.markers.push_back(inv_depth_uncertainty_text_one);
         }
     }
-    inv_depth_uncertainty.name = 'rgb';
     point_cloud.channels.push_back(inv_depth_uncertainty);
     depth_filter_cloud.channels.push_back(inv_depth_uncertainty);
 
     pub_point_cloud.publish(point_cloud);
     pub_depth_filter_cloud.publish(depth_filter_cloud);
+
+    pub_inv_depth_uncertainty_text.publish(marker_array_delete);
+    pub_inv_depth_uncertainty_text.publish(inv_depth_uncertainty_text);
 
     // pub margined potin
     sensor_msgs::PointCloud margin_cloud;

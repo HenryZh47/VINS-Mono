@@ -19,6 +19,7 @@
 #include "../estimator.h"
 #include "../parameters.h"
 #include <fstream>
+#include <sstream>
 
 #include "vins_estimator/InformationEigenValues.h"
 #include "vins_estimator/DegeneracyMetric.h"
@@ -33,7 +34,12 @@ extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
 // henryzh47: pub depth filter cloud
 extern ros::Publisher pub_depth_filter_cloud;
+// henryzh47: pub depth filter marker
+extern ros::Publisher pub_inv_depth_uncertainty_text;
+extern ros::Publisher pub_depth_filter_associate_line;
 extern int IMAGE_ROW, IMAGE_COL;
+
+extern std::ostringstream ss_text_double;
 
 void registerPub(ros::NodeHandle &n);
 
