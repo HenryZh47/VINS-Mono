@@ -42,28 +42,27 @@ extrinsicTranslation: !!opencv-matrix
   data: [0.17247707,-0.02225878, -0.05460906]
 
 #feature traker paprameters
-max_cnt: 250           # max feature number in feature tracking
-min_dist: 15            # min distance between two features
-freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
+max_cnt: 150           # max feature number in feature tracking
+min_dist: 20            # min distance between two features
+freq: 20                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
 F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
-equalize: 0             # if image is too dark or light, trun on equalize to find enough features
+equalize: 1             # if image is too dark or light, trun on equalize to find enough features
 fisheye: 1              # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
 tracking_cnt_thresh: 100 # threshold for number of tracked features to detect tracking degeneracy
 
 #optimization parameters
 max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
-max_num_iterations: 8   # max solver itrations, to guarantee real time
+max_num_iterations: 10   # max solver itrations, to guarantee real time
 keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
 
 #imu parameters       The more accurate parameters you provide, the better performance
-#for handheld, wheeld
-acc_n: 0.2         # accelerometer measurement noise standard deviation. #0.2
-gyr_n: 0.05         # gyroscope measurement noise standard deviation.     #0.05
-acc_w: 0.0002         # accelerometer bias random work noise standard deviation.  #0.02
-gyr_w: 2.0e-5       # gyroscope bias random work noise standard deviation.     #4.0e-5
-
-g_norm: 9.805       # gravity magnitude
+#imu parameters from LVI-SAM
+acc_n: 0.02         # accelerometer measurement noise standard deviation.
+gyr_n: 0.01         # gyroscope measurement noise standard deviation.
+acc_w: 0.002        # accelerometer bias random work noise standard deviation.
+gyr_w: 4.0e-5       # gyroscope bias random work noise standard deviation.
+g_norm: 9.805       #
 
 #loop closure parameters
 loop_closure: 1                    # start loop closure
