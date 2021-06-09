@@ -830,12 +830,12 @@ void Estimator::optimization()
 
     // detect degeneracy in optimization phase
     // TODO (henryzh47): put eigen value threshold to configuration file
-    TicToc t_cov;
-    if (optimizationDegeneracyDetection(problem, 50.0)) {
-        printf("Detected degeneracy in optimization!");
-    }
+    // TicToc t_cov;
+    // if (optimizationDegeneracyDetection(problem, 50.0)) {
+    //     printf("Detected degeneracy in optimization!");
+    // }
     // if (marginalization_flag == MARGIN_SECOND_NEW) ROS_INFO("Marginalizing New Frame!");
-    ROS_DEBUG("Optimization degeneracy costs: %f", t_cov.toc());
+    // ROS_DEBUG("Optimization degeneracy costs: %f", t_cov.toc());
 
     double2vector();
 
