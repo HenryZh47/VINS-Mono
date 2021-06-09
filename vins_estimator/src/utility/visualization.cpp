@@ -273,6 +273,8 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
     sensor_msgs::ChannelFloat32 inv_depth_uncertainty;
     depth_filter_cloud.header = header;
 
+    // henryzh47: and write point depth filter evolution to file
+    ofstream foutC(DF_EVO_RESULT_PATH, ios::app);
     for (auto &it_per_id : estimator.f_manager.feature)
     {
         int used_num;
@@ -292,6 +294,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         point_cloud.points.push_back(p);
 
         // henryzh47: also propagate depth filter cloud
+        // henryzh47: and write point depth filter evolution to file
         if (it_per_id.df_initialized) {
             Vector3d df_pts_i = it_per_id.feature_per_frame[0].point * (1.0 / it_per_id.mu);
             Vector3d w_df_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * df_pts_i + estimator.tic[0]) + estimator.Ps[imu_i];
@@ -300,8 +303,20 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
             depth_filter_cloud.points.push_back(df_p);
             // add uncertainty
             inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
+
+            foutC.setf(ios::fixed, ios::floatfield);
+            foutC.precision(7);
+            // point id
+            foutC << it_per_id.feature_id << ",";
+            // point depth fitler inverse depth mu
+            foutC << it_per_id.mu << ",";
+            // point depth fitler uncertainty sigma2
+            foutC << it_per_id.sigma2 << ";";
         }
     }
+    foutC << endl;
+    foutC.close();
+
     inv_depth_uncertainty.name = 'rgb';
     point_cloud.channels.push_back(inv_depth_uncertainty);
     depth_filter_cloud.channels.push_back(inv_depth_uncertainty);

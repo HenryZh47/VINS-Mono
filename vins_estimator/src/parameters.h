@@ -31,6 +31,8 @@ extern double SOLVER_TIME;
 extern int NUM_ITERATIONS;
 extern std::string EX_CALIB_RESULT_PATH;
 extern std::string VINS_RESULT_PATH;
+// henryzh47: depth filter evolution result
+extern std::string DF_EVO_RESULT_PATH;
 extern std::string IMU_TOPIC;
 extern double TD;
 extern double TR;

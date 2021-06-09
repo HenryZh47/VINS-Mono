@@ -19,6 +19,8 @@ int ESTIMATE_TD;
 int ROLLING_SHUTTER;
 std::string EX_CALIB_RESULT_PATH;
 std::string VINS_RESULT_PATH;
+// henryzh47: depth filter evolution result
+std::string DF_EVO_RESULT_PATH;
 std::string IMU_TOPIC;
 double ROW, COL;
 double TD, TR;
@@ -60,12 +62,17 @@ void readParameters(ros::NodeHandle &n)
     fsSettings["output_path"] >> OUTPUT_PATH;
     VINS_RESULT_PATH = OUTPUT_PATH + "/vins_result_no_loop.txt";
     std::cout << "result path " << VINS_RESULT_PATH << std::endl;
+    // henryzh47: depth filter point log
+    DF_EVO_RESULT_PATH = OUTPUT_PATH + "/depth_fitler_log.txt";
+    std::cout << "depth filter log path " << DF_EVO_RESULT_PATH << std::endl;
 
     // create folder if not exists
     FileSystemHelper::createDirectoryIfNotExists(OUTPUT_PATH.c_str());
 
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
+    std::ofstream fout_df(DF_EVO_RESULT_PATH, std::ios::out);
+    fout_df.close();
 
     ACC_N = fsSettings["acc_n"];
     ACC_W = fsSettings["acc_w"];
