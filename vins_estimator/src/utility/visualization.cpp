@@ -275,6 +275,9 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
 
     // henryzh47: and write point depth filter evolution to file
     ofstream foutC(DF_EVO_RESULT_PATH, ios::app);
+    foutC.setf(ios::fixed, ios::floatfield);
+    foutC.precision(6);
+    foutC << header.stamp.toSec() << ":";
     for (auto &it_per_id : estimator.f_manager.feature)
     {
         int used_num;
@@ -304,7 +307,6 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
             // add uncertainty
             inv_depth_uncertainty.values.push_back(sqrt(it_per_id.sigma2));
 
-            foutC.setf(ios::fixed, ios::floatfield);
             foutC.precision(7);
             // point id
             foutC << it_per_id.feature_id << ",";
