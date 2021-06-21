@@ -61,6 +61,7 @@ class FeaturePerId
     double a;        // a of Beta distribution: When high, probability of inlier is large.
     double b;        // b of Beta distribution: When high, probability of outlier is large.
     double z_range;  // 1/zmin
+    double inlier_ratio; // inlier ratio computed from Beta distribution
 
     Vector3d gt_p;
 
@@ -109,6 +110,8 @@ class FeatureManager
     void setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
     // compute depth measurement uncertainty with camera pose and px error angle
     double dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
+    // compute depth measurement inlier ratio given Beta distribution alpha, beta
+    double dfComputeInlierRatio(double a, double b);
     // initialize depth filter properties
     void dfInit(const double &depth_mean, const double &depth_min, FeaturePerId &f_per_id);
     // update feature depth seed

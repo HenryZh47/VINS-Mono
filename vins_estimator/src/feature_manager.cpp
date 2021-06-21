@@ -463,7 +463,7 @@ void FeatureManager::setDepth(const VectorXd &x, Vector3d Ps[], Vector3d tic[], 
             if (it_per_id.df_initialized) {
                 double z = it_per_id.estimated_depth;
                 // double tau = dfComputeTau(it_per_id, Ps, tic, ric);
-                double tau = 0.5;
+                double tau = 1;
                 double tau_inv = 0.5 * (1.0/max(0.0000001, z-tau) - 1.0/(z+tau));
                 dfUpdateSeed(1.0/z, tau_inv*tau_inv, it_per_id);
             }
@@ -504,6 +504,11 @@ double FeatureManager::dfComputeTau(FeaturePerId &f_per_id, Vector3d Ps[], Vecto
     return (z_plus - z); // tau
 }
 
+double FeatureManager::dfComputeInlierRatio(double a, double b) {
+    // get the mode of the beta distribution
+    return (a-1) / (a + b - 2);
+}
+
 void FeatureManager::dfInit(const double &depth_mean, const double &depth_min, FeaturePerId &f_per_id) {
     f_per_id.a = 10.0;
     f_per_id.b = 10.0;
@@ -511,6 +516,7 @@ void FeatureManager::dfInit(const double &depth_mean, const double &depth_min, F
     // f_per_id.z_range = 1.0 / depth_min;
     f_per_id.z_range = 1.0 / 0.5;
     f_per_id.sigma2 = f_per_id.z_range * f_per_id.z_range / 36;
+    f_per_id.inlier_ratio = 0.5;
     f_per_id.df_initialized = true;
     ROS_DEBUG_STREAM("depth filter initialized feature: " << f_per_id.feature_id << ", depth filter to depth: "
                      << depth_mean << ", sigma2: " << f_per_id.sigma2);
@@ -540,6 +546,7 @@ void FeatureManager::dfUpdateSeed(const double inv_depth, const double tau2, Fea
     f_per_id.mu = mu_new;
     f_per_id.a = (e-f)/(f-e/f);
     f_per_id.b = f_per_id.a * (1.0-f)/f;
+    f_per_id.inlier_ratio = dfComputeInlierRatio(f_per_id.a, f_per_id.b);
 
     ROS_DEBUG_STREAM("depth filter updated feature: " << f_per_id.feature_id << ", depth: " << 1.0 / f_per_id.mu
                      << ", sigma2: " << f_per_id.sigma2 << ", a: " << f_per_id.a << ", b: " << f_per_id.b);

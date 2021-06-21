@@ -31,6 +31,8 @@ def main():
         points = line_info[1].split(';')
         # print("Timestamp {t} has {p} points".format(
         #     t=timestamp, p=len(points)))
+        if (len(points) == 0):
+            continue
 
         for point in points:
             if point == '\n':
@@ -38,10 +40,11 @@ def main():
             point_id = int(point.split(',')[0])
             mu = float(point.split(',')[1])
             sigma2 = float(point.split(',')[2])
+            inlier_ratio = float(point.split(',')[3])
             if (point_id in df_log):
-                df_log[point_id].append((mu, np.sqrt(sigma2)))
+                df_log[point_id].append((mu, np.sqrt(sigma2), inlier_ratio))
             else:
-                df_log[point_id] = [(mu, np.sqrt(sigma2))]
+                df_log[point_id] = [(mu, np.sqrt(sigma2), inlier_ratio)]
 
     f.close()
 
@@ -68,6 +71,7 @@ def main():
             plt.plot(x_axis, norm.pdf(x_axis, mu, sigma), color=curve_color)
             iter_num += 1
 
+        print("inlier ratio:", point_iter[2])
         plt.show()
 
 if __name__ == "__main__":

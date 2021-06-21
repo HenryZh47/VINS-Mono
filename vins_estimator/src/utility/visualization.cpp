@@ -313,7 +313,9 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
             // point depth fitler inverse depth mu
             foutC << it_per_id.mu << ",";
             // point depth fitler uncertainty sigma2
-            foutC << it_per_id.sigma2 << ";";
+            foutC << it_per_id.sigma2 << ",";
+            // point depth fitler inlier ratio
+            foutC << it_per_id.inlier_ratio << ";";
         }
     }
     foutC << endl;
