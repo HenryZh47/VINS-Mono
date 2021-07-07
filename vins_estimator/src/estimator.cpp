@@ -596,6 +596,10 @@ void Estimator::double2vector()
     for (int i = 0; i < f_manager.getFeatureCount(); i++)
         dep(i) = para_Feature[i][0];
     f_manager.setDepth(dep);
+
+    // henryzh47: compute feature chi2 outlier ratio
+    chi2_outlier_ratio = f_manager.getChi2OutlierRatio(Ps, tic, ric);
+
     if (ESTIMATE_TD)
         td = para_Td[0][0];
 

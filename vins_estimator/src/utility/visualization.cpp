@@ -19,6 +19,8 @@ ros::Publisher pub_information_eigen;
 ros::Publisher pub_degeneracy_metric;
 ros::Publisher pub_degeneracy_metric_avg;
 
+ros::Publisher pub_chi2_outlier_ratio;
+
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 CameraPoseVisualization keyframebasevisual(0.0, 0.0, 1.0, 1.0);
 static double sum_of_path = 0;
@@ -44,6 +46,9 @@ void registerPub(ros::NodeHandle &n)
     pub_information_eigen = n.advertise<vins_estimator::InformationEigenValues>("information_eigen", 1000);
     pub_degeneracy_metric = n.advertise<vins_estimator::DegeneracyMetric>("degeneracy_metric", 1000);
     pub_degeneracy_metric_avg = n.advertise<vins_estimator::DegeneracyMetric>("degeneracy_metric_avg", 1000);
+
+    // reprojection chi2 outlier ratio pub
+    pub_chi2_outlier_ratio = n.advertise<std_msgs::Float32>("chi2_outlier_ratio", 1000);
 
     cameraposevisual.setScale(1);
     cameraposevisual.setLineWidth(0.05);
@@ -475,4 +480,10 @@ void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &hea
     
     pub_degeneracy_metric_avg.publish(degeneracy_metric_avg_msg);
 
+}
+
+void pubChiSquareOutlierRatio(const Estimator &estimator, const std_msgs::Header &header) {
+    std_msgs::Float32 msg;
+    msg.data = float(estimator.chi2_outlier_ratio);
+    pub_chi2_outlier_ratio.publish(msg);
 }

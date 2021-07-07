@@ -33,6 +33,8 @@ extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
 extern int IMAGE_ROW, IMAGE_COL;
 
+extern ros::Publisher pub_chi2_outlier_ratio;
+
 void registerPub(ros::NodeHandle &n);
 
 void pubLatestOdometry(const Eigen::Vector3d &P, const Eigen::Quaterniond &Q, const Eigen::Vector3d &V, const std_msgs::Header &header);
@@ -56,3 +58,5 @@ void pubKeyframe(const Estimator &estimator);
 void pubRelocalization(const Estimator &estimator);
 
 void pubInformationEigen(const Estimator &estimator, const std_msgs::Header &header);
+
+void pubChiSquareOutlierRatio(const Estimator &estimator, const std_msgs::Header &header);

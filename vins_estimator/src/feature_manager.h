@@ -93,6 +93,12 @@ class FeatureManager
     list<FeaturePerId> feature;
     int last_track_num;
 
+    // henryzh47: get feature chi2 outlier ratio of this frame
+    double getChi2OutlierRatio(Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
+    // henryzh47: covariance of projection and chi2 threshold
+    const double CHI2_THRESH = 5.991;
+    Matrix2d project_meas_information;
+
   private:
     double compensatedParallax2(const FeaturePerId &it_per_id, int frame_count);
     const Matrix3d *Rs;

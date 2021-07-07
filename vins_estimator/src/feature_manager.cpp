@@ -10,6 +10,8 @@ FeatureManager::FeatureManager(Matrix3d _Rs[])
 {
     for (int i = 0; i < NUM_OF_CAM; i++)
         ric[i].setIdentity();
+
+    project_meas_information << 0.001,0,0,0.001;
 }
 
 void FeatureManager::setRic(Matrix3d _ric[])
@@ -270,6 +272,56 @@ void FeatureManager::removeOutlier()
             feature.erase(it);
         }
     }
+}
+
+// henryzh47: get feature chi2 outlier ratio of this frame
+double FeatureManager::getChi2OutlierRatio(Vector3d Ps[], Vector3d tic[], Matrix3d ric[]) {
+    auto total_valid_feature_num = feature.size();
+    size_t outlier_num = 0;
+    // iterate over all features and compute chi2 score for each of them
+    for (auto &it_per_id : feature) {
+        if (!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2)) {
+            total_valid_feature_num--;
+            continue;
+        }
+
+        if (it_per_id.estimated_depth < 0 || it_per_id.solve_flag != 1) {
+            total_valid_feature_num--;
+            continue;
+        }
+
+        // get the reporjection to latest frame
+        auto imu_i = it_per_id.start_frame, imu_j = it_per_id.endFrame();
+        Vector3d Pi = Ps[imu_i], Pj = Ps[imu_j];
+        Matrix3d Ri = Rs[imu_i], Rj = Rs[imu_j];
+        Vector3d pts_cam_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
+        Vector3d pts_imu_i = ric[0] * pts_cam_i + tic[0];
+        Vector3d pts_w = Ri * pts_imu_i + Pi;
+        Vector3d pts_imu_j = Rj.inverse() * (pts_w - Pj);
+        Vector3d pts_cam_j = ric[0].inverse() * (pts_imu_j - tic[0]);
+        pts_cam_j = pts_cam_j / pts_cam_j.z();
+
+        // convert to pixel
+        // TODO henryzh47: hardcoded focal length here, vins-mono FOCAL_LENGTH is fixed to 460
+        Vector2d proj_uv_j(pts_cam_j.x()*293+COL/2, pts_cam_j.y()*293+ROW/2);
+
+        // compute mahalanobis error
+        Vector2d meas_uv_j = it_per_id.feature_per_frame[imu_j-imu_i].uv;
+
+        auto error = proj_uv_j - meas_uv_j;
+        ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
+                        << "\n pts_cam_j: \n" << pts_cam_j);
+        ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id << "\n "
+                         << "projected point: " << proj_uv_j
+                         << "\n measurement point: " << meas_uv_j << "\n error: " << error);
+        auto mahalanobis_error = error.dot(project_meas_information*error);
+        ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
+                        <<", Mahalanobis distance: " << mahalanobis_error);
+        if (mahalanobis_error > CHI2_THRESH) outlier_num++;
+    }
+
+    ROS_INFO_STREAM("[CHI2 Outlier] ratio: " << double(outlier_num) / total_valid_feature_num);
+    return double(outlier_num) / total_valid_feature_num;
 }
 
 void FeatureManager::removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, Eigen::Vector3d new_P)
