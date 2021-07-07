@@ -11,7 +11,7 @@ FeatureManager::FeatureManager(Matrix3d _Rs[])
     for (int i = 0; i < NUM_OF_CAM; i++)
         ric[i].setIdentity();
 
-    project_meas_information << 0.001,0,0,0.001;
+    project_meas_information << 1,0,0,1;
 }
 
 void FeatureManager::setRic(Matrix3d _ric[])
@@ -306,7 +306,10 @@ double FeatureManager::getChi2OutlierRatio(Vector3d Ps[], Vector3d tic[], Matrix
         Vector2d proj_uv_j(pts_cam_j.x()*293+COL/2, pts_cam_j.y()*293+ROW/2);
 
         // compute mahalanobis error
-        Vector2d meas_uv_j = it_per_id.feature_per_frame[imu_j-imu_i].uv;
+        Vector3d meas_pts_cam_j = it_per_id.feature_per_frame[imu_j-imu_i].point;
+        meas_pts_cam_j = meas_pts_cam_j / meas_pts_cam_j.z();
+        Vector2d meas_uv_j(meas_pts_cam_j.x()*293+COL/2, meas_pts_cam_j.y()*293+ROW/2);
+        // Vector2d meas_uv_j = it_per_id.feature_per_frame[imu_j-imu_i].uv;
 
         auto error = proj_uv_j - meas_uv_j;
         // ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
