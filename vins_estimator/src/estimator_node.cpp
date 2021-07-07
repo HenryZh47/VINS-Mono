@@ -329,6 +329,8 @@ void process()
             
             // pub optimization degeneracy
             pubInformationEigen(estimator, header);
+            // pub feature chi2 outlier
+            pubChiSquareOutlierRatio(estimator, header);
 
             //ROS_ERROR("end: %f, at %f", img_msg->header.stamp.toSec(), ros::Time::now().toSec());
         }
