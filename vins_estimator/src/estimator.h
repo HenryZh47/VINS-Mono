@@ -144,4 +144,7 @@ class Estimator
     size_t avg_filter_n;
     vector<double> degeneracy_metric_avg;
 
+    // feature reprojection chi2 outlier ratio
+    double chi2_outlier_ratio;
+
 };
