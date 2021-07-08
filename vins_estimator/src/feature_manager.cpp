@@ -323,7 +323,7 @@ double FeatureManager::getChi2OutlierRatio(Vector3d Ps[], Vector3d tic[], Matrix
         if (mahalanobis_error > CHI2_THRESH) outlier_num++;
     }
 
-    ROS_INFO_STREAM("[CHI2 Outlier] ratio: " << double(outlier_num) / total_valid_feature_num);
+    // ROS_INFO_STREAM("[CHI2 Outlier] ratio: " << double(outlier_num) / total_valid_feature_num);
     return double(outlier_num) / total_valid_feature_num;
 }
 
