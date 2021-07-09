@@ -309,17 +309,18 @@ double FeatureManager::getChi2OutlierRatio(Vector3d Ps[], Vector3d tic[], Matrix
         Vector3d meas_pts_cam_j = it_per_id.feature_per_frame[imu_j-imu_i].point;
         meas_pts_cam_j = meas_pts_cam_j / meas_pts_cam_j.z();
         Vector2d meas_uv_j(meas_pts_cam_j.x()*293+COL/2, meas_pts_cam_j.y()*293+ROW/2);
-        // Vector2d meas_uv_j = it_per_id.feature_per_frame[imu_j-imu_i].uv;
 
         auto error = proj_uv_j - meas_uv_j;
-        // ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
-        //                 << "\n pts_cam_j: \n" << pts_cam_j);
-        // ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id << "\n "
-        //                  << "projected point: " << proj_uv_j
-        //                  << "\n measurement point: " << meas_uv_j << "\n error: " << error);
         auto mahalanobis_error = error.dot(project_meas_information*error);
-        // ROS_INFO_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
-        //                 <<", Mahalanobis distance: " << mahalanobis_error);
+
+        ROS_DEBUG_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
+                        << "\n pts_cam_j: \n" << pts_cam_j);
+        ROS_DEBUG_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id << "\n "
+                         << "projected point: " << proj_uv_j
+                         << "\n measurement point: " << meas_uv_j << "\n error: " << error);
+        ROS_DEBUG_STREAM("[CHI2 Outlier] feature: " << it_per_id.feature_id
+                        <<", Mahalanobis distance: " << mahalanobis_error);
+
         if (mahalanobis_error > CHI2_THRESH) outlier_num++;
     }
 
